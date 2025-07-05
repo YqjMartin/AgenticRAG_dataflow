@@ -1,0 +1,19 @@
+get_identifier_prompt: |
+  You need to extract the content_identifier from question. Here's how:
+  1. For each question, identify the main subject/noun phrase that the question is about
+  2. This should typically be:
+    - Proper nouns (names, titles)
+    - Specific technical terms
+    - Unique identifiers in the question
+
+  Examples:
+  {
+      "question": "What is the third movie in the Avatar series?",
+      "content_identifier": "Avatar series"
+  },
+  {
+      "question": "龙美术馆2025年展览展览时间范围是什么",
+      "content_identifier": "龙美术馆"
+  }
+
+  Return JSON format with key "content_identifier"

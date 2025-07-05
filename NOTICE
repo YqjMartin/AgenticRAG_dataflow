@@ -1,0 +1,9 @@
+NOTICE
+Copyright (c) 2025 OPPO
+
+This project is licensed under MIT License. See the LICENSE file for details.
+
+This project may include third-party open-source components:
+- SmolAgents - Apache 2.0 - https://github.com/huggingface/smolagents
+
+By using this software, you agree to comply with the applicable license terms.

@@ -1,0 +1,377 @@
+backward_task_prompt: |
+  Conduct divergent searches based on the input element to find an appropriate superset related to its attributes, and elaborate on the relationship between the superset and the element (mine for special and uniquely pointing relationships to ensure that the superset + relationship does not mislead to other subsets). Example supersets include:
+  1. The superset of a paragraph or sentence can be the text content it belongs to.
+  2. The superset of a specific term can be its corresponding discipline or category.
+  3. The superset of a specific date can be any date range containing it, such as the week or month it belongs to.
+  4. The superset of a short event can be the complete specific event it belongs to.
+  5. The superset of a page can be other pages referencing it or its parent page.
+  6. Only generate one relationship, and the content of the relationship should preferably not include strongly specific proper nouns.
+  
+  Optional expressions for relationships:
+  1. Clearly express hierarchical or ownership relationships. If the input is a sub-item of a series of works, the relation should indicate its position; if the input is a part of a superset, the relation should clarify its ownership.
+  2. Provide the specific positioning of the input content, such as time range, field of paper publication, or specific role in the superset.
+  3. Wording should conform to the research field or industry standards of the input content.
+  4. Only provide necessary association information to avoid irrelevant content. Good example: "This study is part of the IRAM NOEMA Large Program research collection". Bad example: "This study is a very important research conducted by many scientists and has produced very meaningful results" (verbose and containing subjective evaluations).
+  
+  Note:
+  1. Please return the identifier of the superset content, such as attribute name, web page title, paper title, etc., which uniquely locates the superset content.
+  2. The content of the superset needs to be obtained through tool invocation, which can be specific web content, PDF text, or image understanding content.
+  3. Please clearly describe the relationship between the superset content and the input element, that is, list the qualification conditions from the superset content to ensure that the conditions uniquely point to the input element, and the description of the conditions should be concise.
+  4. Use a maximum of 3 search keywords per search; if more than 3 keywords are needed, perform multiple searches separately.
+  5. The obtained identifier should preferably be derived from search results and not include the input content.
+  6. If the input is a PDF document, give priority to invoking tools to read the document content.
+  
+  Return format requirements: Please return the result in JSON format with keys 'identifier': str (identifier) and 'relation': str (relationship).
+  
+  Here are some reference input-output examples: 
+  Example1:
+  Input: Avatar 3: Fire and Ash
+  identifier: Avatar film series
+  relation: The third film
+  
+  Example2:
+  Input: The 15 social media trends that will shape your 2025 strategy
+  identifier: Hootsuite blog end of 2024
+  relation: The authoritative trends report published by Hootsuite to guide social media strategy development
+
+  Example3:
+  Input: SOLIS (Seeds of Life In Space) project
+  identifier: NOEMA Large Program
+  relation: A sub-project within NOEMA's specific large observation program related to research on the existence of life in the universe.
+  
+  Example4:
+  Input: SOLIS. XIX. The chemically rich SVS13-B protostellar jet
+  identifier: IRAM NOEMA Large Program research collection
+  relation: One of the imaged enriched molecular jet samples in the IRAM NOEMA Large Program research collection, specifically imaged and analyzed for molecular distribution and composition within the collection, uniquely locatable via observation data on SVS13-B in the collection.
+  
+  Example5:
+  Input: AdCare -VLM: Leveraging Large Vision Language Model (LVLM) to Monitor Long-Term Medication Adherence and Care
+  identifier: A Survey of State of the Art Large Vision Language Models: Alignment, Benchmark, Evaluations and Challenges
+  relation: A paper that introduces advancements in large vision language models in A Survey of State of the Art Large Vision Language Models: Alignment, Benchmark, Evaluations and Challenges, covering models including the LVLM described in the input paper.
+  
+  Example6:
+  Input: Immigration is a higher priority for Americans in 2025: AP-NORC poll | AP News
+  identifier: 2025 policy priorities report for AAPI communities
+  relation: The poll results about shifting immigration priorities featured in AP News and referenced in AAPI policy reports
+
+  Example7:
+  Input: X-ray Absorption Spectroscopy (XAS) database for iron-containing proteins (arXiv:2504.18554)
+  identifier: iron-binding proteins database
+  relation: The specialized database that collects XAS data specifically for proteins containing iron
+
+  Example8: 
+  Input: live-action 'Snow White' movie controversy
+  identifier: Disney animated film adaptation
+  relation: The controversial live-action movie adapted from a Disney animated film featuring the main character Snow White
+  
+  Example9:
+  Input: Evaluating the evidence: a systematic review of reviews of the effectiveness and safety of digital interventions for ADHD | BMC Psychiatry | Full Text
+  identifier: BMC Psychiatry journal 2025 publications
+  relation: The full-text systematic review about digital ADHD interventions published in BMC Psychiatry
+  
+  Example10:
+  Input: Enron Corporation
+  identifier: 2001 Fortune Global 500 energy industry rankings
+  relation: The company that ranked first in revenue in the energy sector according to the 2001 Fortune Global 500 rankings
+  
+  Current input: 
+  {element}
+
+rag_backward_task_prompt: |
+  You are helping build multi-hop QA tasks. Given a target `element` and its corresponding `original_doc`, your task is to find an alternative expression—called an `identifier`—from a **different document**, that can meaningfully and accurately represent or subsume the `element`. This will later be used to replace the `element` in a core question to make it more complex.
+
+  ### Goals:
+  1. Find a superset concept, semantic alias, or broader context (called `identifier`) that uniquely connects to the `element`, and can be safely substituted into the core question.
+  2. This identifier MUST come from a **different document** (not the `original_doc`).
+  3. Explain how this new identifier relates to the `element` in a concise and factual `relation` statement.
+
+  ### Examples of desirable transformations:
+  - A movie → the film series it belongs to  
+  - A named company → the industry leader in a known ranking  
+  - A specific quote → the author or the broader text it appears in  
+  - A short event → the historical movement or broader time period it belongs to  
+  - A paper → the conference or research program it is part of
+
+  ### Output Format (JSON):
+  {{
+    "identifier": "<alternative identifier to be used in replacement>",
+    "relation": "<a concise sentence explaining how this identifier relates to the original element>",
+    "source_doc": "<the full content of the document where this identifier was extracted>"
+  }}
+
+  ### Example:
+  Input: 
+  element: Symphony No. 5  
+  original_doc: 
+  Symphony No. 5
+  Beethoven's Symphony No. 5 in C Minor, "Fate," is iconic. Its four-note opening ("da-da-da-DUM") symbolizes fate knocking. Composed amid his hearing loss, it blends drama and triumph. Premiered in 1808, it's a masterpiece of resilience. A cornerstone of classical music.  
+
+  Output:
+  {{
+    "identifier": "Ludwig van Beethoven",
+    "relation": "Beethoven composed the Symphony No. 5 while gradually losing his hearing.",
+    "source_doc": "Ludwig van Beethoven (1770–1827), a giant of classical music, studied under Haydn and Mozart. As he grew deaf, he channeled struggle into creativity, composing Symphony No. 5 amid his fading hearing. Works like the Moonlight Sonata also emerged from his silence. His music bridged eras, blending structure with emotion, a testament to genius transcending hardship."
+  }}
+
+  ### Input:
+  element: {element}
+  original_doc: 
+  {original_doc}
+
+                    
+generate_query_prompt: |
+  Please generate a question based on the content of the input identifier, a certain answer, and a certain relationship (this relationship is the relationship between the content of the file corresponding to the identifier and the given answer), such that
+  The answer to this question is the input answer.
+  The content of this question is determined by the content of the identifier and the content of the given relationship.
+  The generated question should not involve the content of the input answer.
+  Please return it in JSON format, with the key of the JSON being new_query.
+
+rag_generate_query_prompt: |
+  You are asked to generate a natural-sounding auxiliary question that refers to a given `identifier` and a `relation`, such that the answer to this question is a specific `answer`, but the question itself should not reveal or include that answer directly.
+
+  ### Your Objective:
+  Construct a concise and fluent question using the information from the `identifier` and `relation`, such that:
+  - It indirectly implies the given `answer` as the only valid answer.
+  - It does NOT explicitly mention or describe the `answer`.
+  - It focuses on the **identifier** (e.g., a paper, an event, a person, etc.) and expresses the **relation** clearly but naturally.
+
+  ### Input:
+  identifier: {identifier}  
+  relation: {relation}  
+  answer: {answer}  
+
+  ### Output Format (JSON):
+  {{
+    "new_query": "<a clear, specific, and answerable question based on identifier and relation>"
+  }}
+
+  ### Example:
+  Input:
+  identifier: "Ludwig van Beethoven"  
+  relation: "Beethoven composed the Symphony No. 5 while gradually losing his hearing."  
+  answer: "Symphony No. 5"
+
+  Output:
+  {{
+    "new_query": "Which piece did Beethoven compose while gradually losing his hearing?"
+  }}
+
+rag_merge_query_prompt: |
+  You are an expert in question rewriting and multi-hop reasoning.
+  Your task is to rewrite a given `core_query` into a more complex, natural-sounding question using an `auxiliary_query` that indirectly refers to a part of it. The final question should require more reasoning steps but still lead to the same final answer.
+
+  ### Input:
+  - core_query: The original question.
+  - golden_answer: The answer to the core_query.
+  - auxiliary_query: A question that leads to an intermediate answer related to the original question.
+  - auxiliary_answer: The answer to the auxiliary_query.
+
+  ### Objective:
+  Use the content and logic of the auxiliary_query + auxiliary_answer to **replace or rephrase** part of the core_query, such that:
+  - The new question still leads to the same golden_answer.
+  - The new question no longer contains or directly mentions the auxiliary_answer (i.e., avoid repeating the original element).
+  - The new question is slightly more complex and reflects a multi-hop reasoning path.
+  - The question remains fluent, clear, and human-like.
+
+  ### Constraints:
+  - Do NOT mention the golden_answer directly.
+  - Do NOT copy the auxiliary_answer verbatim into the new question.
+  - Prefer minimal and elegant rephrasing.
+  - Maintain proper names and key structure from the core_query where possible.
+
+  ### Output Format (JSON):
+  {{
+    "new_query": "<The merged multi-hop style question>"
+  }}
+
+  ### Example:
+  Input:
+  core_query: What is the minor key of Beethoven's Symphony No. 5?
+  golden_answer: C minor
+  auxiliary_query: Which piece did Beethoven compose while gradually losing his hearing?
+  auxiliary_answer: Symphony No. 5
+
+  Output:
+  {{
+    "new_query": "What is the minor key of the work composed by Beethoven as he gradually lost his hearing?"
+  }}
+
+  ### Input:
+  core_query: {core_query}
+  golden_answer: {golden_answer}
+  auxiliary_query: {auxiliary_query}
+  auxiliary_answer: {auxiliary_answer}
+
+
+merge_query_prompt: |
+  Given a core query, an auxiliary query, and an element to be replaced, modify the core query by substituting the description of the element with the auxiliary query.
+  The resulting query should exclude any content related to the original element.
+  Requirements:
+  1. The new query should be slightly more complex than the original core Query and require more steps to solve. But do not make too many changes to the core query.
+  2. The new query should point to the unique answer: golden_answer, and should not point to other answers.
+  3. The new query must not reveal information about the golden_answer.
+  4. The description related to the element in the core query should be replaced or omit in the new query.
+  5. After merging, polish the question to make it conform to human expression habits without changing the original meaning. Do not modify the proper nouns appearing in it.
+  6. The final result should be in JSON format with keys 'analysis' and 'new_query'
+  
+  
+  Here are some reference examples:
+  Example1:
+  Core Query: What is the 2nd positive integer?
+  Auxiliary Query: In natural numbers, what are the numbers except 0 called?
+  Element to be replaced: positive integer
+  Generated new question: In natural numbers, what is the second number except 0?
+  
+  Example2:
+  Core Query: Based on the data that the box office of new films in the May Day holiday season has broken 300 million, can we ask what is the attendance rate ranking of 'Ne Zha 2'?
+  Auxiliary Query: According to the 2025 May Day holiday season movie box office summary news and by counting all released new films' box office, how many hundred million has the box office of new films in the May Day holiday season broken?
+  Element to be replaced: May Day holiday season new films box office breaks 300 million
+  Generated new question: According to the 2025 May Day holiday season movie box office summary news and by counting all released new films' box office, can we ask what is the attendance rate ranking of 'Ne Zha 2'?
+  
+  Example3:
+  Core Query: In the report about the controversy caused by the live-action movie of 'Snow White', which actor did Disney finally choose to play Snow White?
+  Auxiliary Query: Which live-action movie adapted from a Disney animated film, whose title contains the main character of the fairy tale and is the only subset, has recently caused controversy?
+  Element to be replaced: live-action 'Snow White' movie controversy
+  Generated new question: In the recently controversial live-action movie adapted from a Disney animated film and whose title only contains the main character's name of the fairy tale, which actor was finally cast as the protagonist in the film?
+  
+  Example4:
+  Core Query: What is the publication date of the document 'Which Agent Causes Task Failures and When? On Automated Failure Attribution of LLM Multi-Agent Systems'?
+  Auxiliary Query: Which paper on multiagent systems (cs.MA) proposes an automated method for attributing task failures in large language model multi-agent systems and can be uniquely located by its discipline?
+  Element to be replaced: Multiagent Systems (cs.MA)
+  Generated new question: What is the publication date of the paper that proposes an automated failure attribution method for large language model multi-agent systems and can be uniquely identified by its subject area within multiagent systems?
+  
+  Example5:
+  Core Query: What is the publication date of the paper that officially and firstly introduces the large-scale English email information retrieval benchmark, which is based on the complete set of internal communications among employees from a well-known energy company and contains rich question-answer content, enabling mapping of about 100,000 emails to over 150 employees from this collection?
+  Auxiliary Query: In the 2001 Fortune Global 500 energy industry rankings, which company ranked first in revenue?
+  Element to be replaced: Enron Corporation
+  Generated new question: What is the publication date of the paper that officially and firstly introduces the large-scale English email information retrieval benchmark, which is based on the complete set of internal communications among employees from the company that ranked first in revenue in the energy sector in the 2001 Fortune Global 500, and contains rich question-answer content, enabling mapping of about 100,000 emails to over 150 employees from this collection?
+  
+  Example6:
+  Core Query: Please identify the paper by its arXiv identifier 'arXiv:2505.00342 [cs.SE]', and based on this paper, determine since when the LLMPrism system has been deployed on production Platform-X and what timeline reconstruction error it achieves.
+  Auxiliary Query: In the May 2025 Software Engineering category of arXiv, what is the paper number of the only paper titled 'LLMPrism: Black-box Performance Diagnosis for Production LLM Training Platforms'?
+  Element to be replaced: arXiv:2505.00342 [cs.SE]
+  Generated new question: Please identify the paper in the May 2025 Software Engineering category on arXiv with the unique title 'LLMPrism: Black-box Performance Diagnosis for Production LLM Training Platforms', and based on this paper, determine since when the LLMPrism system has been deployed on production Platform-X and what timeline reconstruction error it achieves.
+  
+  Example7:
+  Core Query: According to the paper 'Large Language Models to Accelerate Organic Chemistry Synthesis', how many Q&A pairs about reactions was Chemma fine-tuned on to accelerate organic chemistry synthesis?
+  Auxiliary Query: In the paper arXiv:2504.18340, what is the specific research content involving the use of large language models to accelerate organic chemistry synthesis?
+  Element to be replaced: Large Language Models to Accelerate Organic Chemistry Synthesis
+  Generated new question: In the paper arXiv:2504.18340, how many Q&A pairs related to reactions was Chemma fine-tuned on to accelerate organic chemistry synthesis?
+  
+  Example8:
+  Core Query: In the XAS database, which entries about ferritin and its X-ray absorption spectroscopy are specially collected? How many protein structures and corresponding spectral data do these entries involve in total?
+  Auxiliary Query: Which database is a database of iron-containing proteins and specially collects X-ray absorption spectroscopy data of iron-binding proteins?
+  Element to be replaced: X-ray Absorption Spectroscopy (XAS) database for iron-containing proteins (arXiv:2504.18554)
+  Generated new question: There is a protein database that specially collects X-ray absorption spectroscopy data of iron-binding proteins. How many protein structures and their corresponding spectral data are covered in the entries about ferritin in this database?
+  
+  Example9:
+  Core Query: According to arXiv:2505.00367, which dataset contains all data instances for the analysis of cognitive distortions in Korean adolescents, where can this dataset be publicly obtained?
+  Auxiliary Query: In the Computation and Language May 2025 arXiv paper list, what is the arXiv number of the paper titled "KoACD: The First Korean Adolescent Dataset for Cognitive Distortion Analysis" by JunSeo Kim and HyeHyeon Kim?
+  Element to be replaced: arXiv:2505.00367
+  Generated new question: Based on the Computation and Language May 2025 arXiv paper list, the paper titled "KoACD: The First Korean Adolescent Dataset for Cognitive Distortion Analysis" by JunSeo Kim and HyeHyeon Kim, which dataset integrates all data instances for the analysis of cognitive distortions in Korean adolescents, and where can this dataset be publicly downloaded?
+  
+  Example10:
+  Core Query: What is the arXiv ID, publication date, and publication category of the paper 'Red Teaming Large Language Models for Healthcare'?
+  Auxiliary Query: What research achievement on the application of red team testing of large language models in the healthcare field was presented at the pre-symposium of the Machine Learning for Healthcare Conference (MLHC) held in August 2024?
+  Element to be replaced: Red Teaming Large Language Models for Healthcare
+  Generated new question: What is the arXiv ID, publication date, and publication category of the paper that was presented as a research outcome on red teaming large language models for healthcare applications at the pre-symposium of the Machine Learning for Healthcare Conference (MLHC) in August 2024?
+  
+  Example11:
+  Core Query: According to the ALA Releases State of America’s Libraries 2025 Report in American Libraries Magazine, on what date will Adriana Harmeyer compete in the Jeopardy! Masters Tournament and what milestone is she aiming to achieve?
+  Auxiliary Query: Which publication released the annual report on the state of America's libraries in its April 2025 special issue?
+  Element to be replaced: ALA Releases State of America’s Libraries 2025 Report | American Libraries Magazine
+  Generated new question: According to the annual report on the state of America's libraries published in the April 2025 special issue of the relevant magazine, on what date will Adriana Harmeyer compete in the Jeopardy! Masters Tournament, and what milestone is she aiming to accomplish?
+  
+  Example12:
+  Core Query: According to The Clarivate Impact Factor, which journal topped the Biochemistry category in 1992 and what was its impact factor?
+  Auxiliary Query: According to the metric used in Journal Citation Reports (JCR) to evaluate and determine a journal's influence in a specific year, which journal held the top position in the Biochemistry category in 1992, and what was its corresponding value for that metric?
+  Element to be replaced: The Clarivate Impact Factor | Clarivate
+  Generated new question: According to the annual report on the state of America's libraries published in the April 2025 special issue of the relevant magazine, on what date will Adriana Harmeyer compete in the Jeopardy! Masters Tournament, and what milestone is she aiming to accomplish?
+  
+  Example13:
+  Core Query: What is the registration identifier (Prospero ID) for the systematic review on the effectiveness and safety of digital interventions for ADHD published in BMC Psychiatry?
+  Auxiliary Query: Which systematic review paper, published in 2025, can be uniquely identified as focusing on digital interventions for ADHD and appears as a full text article in the psychiatric journal BMC Psychiatry?
+  Element to be replaced: Evaluating the evidence: a systematic review of reviews of the effectiveness and safety of digital interventions for ADHD | BMC Psychiatry | Full Text
+  Generated new question: For the systematic review published in 2025 that uniquely addresses digital interventions for ADHD as a full text article in the psychiatric journal BMC Psychiatry, what is the registration identifier (Prospero ID) associated with this review?
+  
+  Example14:
+  Core Query: Based on the article "Top trends in academic libraries: A review of the trends and issues" by the Research Planning and Review Committee in College & Research Libraries News, what were the article views for June 2022?
+  Auxiliary Query: Which article, published as a full entry by the Research Planning and Review Committee in the 2024 annual trends review section of College & Research Libraries News, provides a comprehensive analysis of the primary developments in academic libraries for that year?
+  Element to be replaced: Top trends in academic libraries: A review of the trends and issues" | Research Planning and Review Committee | College & Research Libraries News
+  Generated new question: Based on the article published as a full entry by the Research Planning and Review Committee in the 2024 annual trends review section of College & Research Libraries News, which provides a comprehensive analysis of the primary developments in academic libraries for that year, what were this article's views for June 2022?
+  
+  Example15:
+  Core Query: According to the guide "How to read and understand a scientific paper: a guide for non-scientists - Impact of Social Sciences", how is the informativeness of the review article on genome‐wide association studies published in 2001 evaluated in 2013?
+  Auxiliary Query: Which specific article, published on the Impact of Social Sciences (LSE Impact Blog), serves as a guide for readers without a scientific background to help them read and understand scientific papers?
+  Element to be replaced: "How to read and understand a scientific paper: a guide for non-scientists - Impact of Social Sciences"
+  Generated new question: According to the article published on the Impact of Social Sciences (LSE Impact Blog) that serves as a guide for readers without a scientific background to help them read and understand scientific papers, how is the informativeness of the review article on genome-wide association studies published in 2001 evaluated in 2013?
+  
+  Example16:
+  Core Query: According to the AP News report "Harvard pledges reforms following internal reports on antisemitism and anti-Arab bias", what is the amount of federal funding that was frozen for Harvard University by the Trump administration?
+  Auxiliary Query: Which headline, published on April 29, 2025, can be found under the US News channel on AP News and reports on reforms pledged by a prominent university following internal findings about antisemitism and anti-Arab bias?
+  Element to be replaced: Harvard pledges reforms following internal reports on antisemitism and anti-Arab bias | AP News
+  Generated new question: According to the AP News headline published on April 29, 2025, in the US News section, which reports on a prominent university pledging reforms following internal findings of antisemitism and anti-Arab bias, what is the amount of federal funding that was frozen for this university by the Trump administration?
+  
+  Example17:
+  Core Query: According to the Academic Journal Guide by the Chartered Association of Business Schools, what type of review is the 2024 AJG and what are its key modifications regarding the inclusion of new journals and changes in journal metrics?
+  Auxiliary Query: What is the official guide published by the Chartered Association of Business Schools that supports the standards of business and management education in the UK?
+  Element to be replaced: Academic Journal Guide | Chartered Association of Business Schools
+  Generated new question: According to the latest official guide published in 2024 by the Chartered Association of Business Schools, which supports the standards of business and management education in the UK, what type of review does it utilize and what key modifications have been made concerning the inclusion of new journals and changes in journal metrics?
+  
+  Example18:
+  Core Query: In '6 Types of Academic Papers and Journal Articles - Abroadin', which notable case study examples in psychology are illustrated?
+  Auxiliary Query: Which Abroadin Blog post, published on December 15, 2022, provides an overview of different kinds of academic papers and journal articles?
+  Element to be replaced: 6 Types of Academic Papers and Journal Articles - Abroadin
+  Generated new question: In the Abroadin Blog post, published on December 15, 2022, that provides an overview of various types of academic papers and journal articles, which notable case study examples in psychology are illustrated?
+  
+  Example19:
+  Core Query: According to 'The 15 social media trends that will shape your 2025 strategy', what percentage of social media managers report being up-to-date with current trends?
+  Auxiliary Query: What is the title of the article published on the Hootsuite blog at the end of 2024 that serves as the original source of information about the trends influencing social media strategies in 2025 and can be uniquely identified by its headline?
+  Element to be replaced: The 15 social media trends that will shape your 2025 strategy
+  Generated new question: According to the article published on the Hootsuite blog at the end of 2024—serving as the original source about the trends shaping social media strategies for 2025 and uniquely identifiable by its headline—what percentage of social media managers report being up-to-date with current trends?
+  
+  Example20:
+  Core Query: According to the AP-NORC poll reported by AP News, what percentage of Republicans currently identify immigration or a U.S.-Mexico border wall as a top government priority for 2025, and how does this compare to the percentage from two years ago?
+  Auxiliary Query: Which AP-NORC poll result, specifically cited in the section on shifting public priorities toward immigration in the 2025 policy priorities report for AAPI communities, was featured in recent major news coverage?
+  Element to be replaced: Immigration is a higher priority for Americans in 2025: AP-NORC poll | AP News
+  Generated new question: Based on the AP-NORC poll findings that were specifically cited in the section about shifting public priorities toward immigration in the 2025 policy priorities report for AAPI communities and featured in recent major news coverage, what percentage of Republicans currently identify immigration or a U.S.-Mexico border wall as a top government priority for 2025, and how does this figure compare to the percentage reported two years earlier?
+
+query_compare_prompt: |
+  Please compare the difficulty of solving the new_query and the old_query, and determine whether the new_query is a more complex question with a uniquely directed answer based on the following criteria:
+  1. Whether the answer to the new_query is clear and uniquely points to the target_answer;
+  2. Whether the description related to "{last_identifier}" in the old_query has been replaced in the new_query;
+  3. Whether the new_query only adds one step of operation compared to the old_query.
+  4. Whether the new_query no longer contains parts of the content in "{last_identifier}".
+  
+  The final result should be in JSON format with keys 'analysis' (a string for analysis of the input) and 'is_valid' (a boolean to indicate whether all requirements are simultaneously met).
+  new_query:{new_task}
+  old_query:{full_query}
+  target_answer:{golden_answer}
+
+augmented_question_prompt: |
+  You have one question to answer. It is paramount that you provide a correct answer.
+  Give it all you can: I know for a fact that you have access to all the relevant tools to solve it and find the correct answer (the answer does exist). 
+  Failure or 'I cannot answer' or 'None found' will not be tolerated, success will be rewarded.
+  If you need to use the search tool and search for more than three keywords, please search separately multiple times.
+  Run verification steps if that's needed, you must make sure you find the correct answer!
+  Here is the task: {task}
+
+is_superset_valid: |
+  **Task**: Validate if a given "superset" can uniquely identify a "subset" based on the provided "relationship".  
+  
+  **Rules**:  
+  1. **Superset-Subset Relationship**:  
+    - The "superset" must be a true generalization of the "subset" (e.g., "Animal" is a valid superset of "Dog").  
+    - The "superset" CANNOT be a synonym of the "subset" (e.g., "Car" and "Automobile" are invalid).  
+  
+  2. **Relationship Validity**:  
+    - The relationship must **explicitly and uniquely** link the superset to the subset.    
+    - It CANNOT be a **many-to-one mapping**.  
+  
+  **Output Format**:  
+  Return a JSON with the key `new_query`. The value should be:  
+  - `"valid"` if the superset and relationship can uniquely locate the subset.  
+  - `"invalid"` otherwise.  
+  
+  **Example Valid Output**:  
+  {"new_query": "valid"}

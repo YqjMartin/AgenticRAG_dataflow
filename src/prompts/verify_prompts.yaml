@@ -1,0 +1,112 @@
+score_prompt_single: |
+  Evaluate the consistency of the core content of the golden answer and the other answer
+  # Scoring Criteria 
+    1) 2 points: the information between the golden answer and the other answer completely consistent, although the expression methods can be different. 
+    2) 1 point: the other answer contains all the information of the golden answer but has additional valid information.
+    3) 0 point: the other answer lacks the necessary key information of the golden answer, or there are contradictions in both the information.
+  
+  # Examples:
+    1) Examples for 2 points: 
+        1.1) two answers are completely consistent:
+            - Golden answer: Interest rates should be raised and inflation should be monitored.
+            - Other answer: It is necessary to raise interest rates and monitor inflation.
+    2) Examples for 1 point: 
+        2.1) the other answer contains all the information of the golden answer and adds extra useful information:
+        - Golden answer: The interest rates should be raised.
+        - Other answer: The interest rates should be raised and inflation should be monitored.
+    3) Examples for 0 point: 
+        3.1) the other answer lacks the key information of the golden answer:
+        - Golden answer: The interest rates should be raised and inflation should be monitored.
+        - Other answer: The interest rates should be raised.
+        3.2) the other answer has contradictions:
+        - Golden answer: Interest rates should be raised by 50 basis points.
+        - Other answer: Interest rates should be raised by 25 basis points.
+  
+  # the output should be in JSON format as required without any irrelevant content
+  ```json
+  {{
+    "answer_analysis":"give out the reason on how to score the llm_answer",
+    "answer_score":0/1/2
+  }}
+  ```
+
+score_prompt_both: |
+  Evaluate the consistency of the core content of (1) the golden answer and the agent answer, and (2) the golden answer and the llm answer.
+
+  # Scoring Criteria (Here the other answer can be either the agen_answer or the llm answer)
+      1) 2 points: the information between the golden answer and the other answer completely consistent, although the expression methods can be different. 
+      2) 1 point: the other answer contains all the information of the golden answer but has additional valid information.
+      3) 0 point: the other answer lacks the necessary key information of the golden answer, or there are contradictions in both the information.
+
+  # Examples:
+      1) Examples for 2 points: 
+          1.1) two answers are completely consistent:
+              - Golden answer: Interest rates should be raised and inflation should be monitored.
+              - Other answer: It is necessary to raise interest rates and monitor inflation.
+      2) Examples for 1 point: 
+          2.1) the other answer contains all the information of the golden answer and adds extra useful information:
+          - Golden answer: The interest rates should be raised.
+          - Other answer: The interest rates should be raised and inflation should be monitored.
+      3) Examples for 0 point: 
+          3.1) the other answer lacks the key information of the golden answer:
+          - Golden answer: The interest rates should be raised and inflation should be monitored.
+          - Other answer: The interest rates should be raised.
+          3.2) the other answer has contradictions:
+          - Golden answer: Interest rates should be raised by 50 basis points.
+          - Other answer: Interest rates should be raised by 25 basis points.
+
+  # the output should be in JSON format as required without any irrelevant content
+  ```json
+  {{
+      "agent_answer_analysis":"give out the reason on how to score the agent_answer",
+      "agent_answer_score":0/1/2,
+      "llm_answer_analysis":"give out the reason on how to score the llm_answer",
+      "llm_answer_score":0/1/2
+  }}
+  ```
+
+acc_prompt_single: |
+  Evaluate the consistency of the core content of the golden answer and the other answer.
+  Please return two values in JSON format as required without any irrelevant content, their keys are: 
+  1. recall_answer: bool, whether the other answer contains all the information of the golden answer.
+  2. valid_num: int, the amount of valid information in the other answer.
+  
+  # Examples:
+    1)  - Golden answer: Interest rates should be raised and inflation should be monitored.
+        - Other answer: It is necessary to raise interest rates and monitor inflation.
+        - Output: recall_answer=True, valid_num=1
+  
+    2)  - Golden answer: The interest rates should be raised.
+        - Other answer: The interest rates should be raised and inflation should be monitored.
+        - Output: recall_answer=True, valid_num=2
+  
+    3)  - Golden answer: China
+        - Other answer: The BRICS: Brazil, Russia, India, China and South Africa.
+        - Output: recall_answer=True, valid_num=5
+  
+    4)  - Golden answer: The interest rates should be raised and inflation should be monitored.
+        - Other answer: The interest rates should be raised.
+        - Output: recall_answer=False, valid_num=1
+  
+
+is_superset_valid: |
+  developer_prompt = '''
+  **Task**: Validate if a given "superset" can uniquely identify a "subset" based on the provided "relationship".  
+  
+  **Rules**:  
+  1. **Superset-Subset Relationship**:  
+    - The "superset" must be a true generalization of the "subset" (e.g., "Animal" is a valid superset of "Dog").  
+    - The "superset" CANNOT be a synonym of the "subset" (e.g., "Car" and "Automobile" are invalid).  
+  
+  2. **Relationship Validity**:  
+    - The relationship must **explicitly and uniquely** link the superset to the subset.    
+    - It CANNOT be a **many-to-one mapping**.  
+  
+  **Output Format**:  
+  Return a JSON with the key `new_query`. The value should be:  
+  - `"valid"` if the superset and relationship can uniquely locate the subset.  
+  - `"invalid"` otherwise.  
+  
+  **Example Valid Output**:  
+  {"new_query": "valid"}
+  '''

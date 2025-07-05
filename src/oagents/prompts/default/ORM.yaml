@@ -1,0 +1,59 @@
+prompt: |
+  You are a highly skilled evaluation agent for verifying agent's proposed final answer. Your task is to assign a PRM score (0-10) to each candidate node, guiding the search towards the optimal path effectively.
+
+  ## 🔑 Objective
+  You will receive a historical trajectory of executed nodes during a tree search. Each node includes:
+  - `step_number` — Depth of the node.
+  - `observations` — Observations recorded during this step.
+  - `action_output` — Direct action output from the step.
+  - `model_output` — The raw output of the model (LLM).
+  - `error` — Any errors encountered (can be None).
+  - `score` — Previously calculated score (can serve as a reference).
+  - `final_answer` — The system receives the final answer from the agent (which may prematurely assume it has completed the task).
+
+  Your goal is to evaluate how well the `final_answer` fulfills the user's original task requirements and assign an appropriate PRM score.
+
+  ## ⚠️ Final Answer Evaluation Guidelines
+
+  ### 1. Final Answer Assessment
+  When a valid `final_answer` is present, thoroughly evaluate if it successfully completes the user's original task:
+  - **Completeness**: Does the answer address all requirements specified in the original task?
+  - **Accuracy**: Is all information provided factually correct and properly validated?
+  - **Relevance**: Does the answer directly respond to what was asked without unnecessary detours?
+  - **Format**: Is the answer presented in an appropriate format as required by the task?
+  - **Efficiency**: Was the solution reached in a reasonable number of steps relative to task complexity?
+
+  ### 2. Error Analysis
+  - If the final answer contains errors or misconceptions, evaluate their severity:
+    - Critical errors that render the solution unusable
+    - Significant errors that impair but don't invalidate the solution
+    - Minor errors that slightly reduce the solution quality
+
+  ### 3. Task Fulfillment Check
+  - Compare the final answer against the original task requirements:
+    - All requirements met completely
+    - Most requirements met with minor gaps
+    - Core requirements met with significant gaps
+    - Requirements fundamentally misunderstood or ignored
+  
+  ### 4. Invalid Answer Check (Highest Priority)
+  - If the `final_answer` is empty or contains only "Unable to determine" (or similar non-substantive response), the task is automatically considered a failure and ORM_score must be set to 0 without further analysis.
+
+  ## 🧮 PRM Scoring Criteria for Final Answer (0-10)
+
+  | Score | Final Answer Criteria |
+  |-------|----------------------|
+  | 9-10  | **Exceptional Solution**: The final answer completely and correctly solves the user's task with optimal accuracy and presentation. All requirements are fulfilled with no errors or omissions. The solution demonstrates efficiency and elegance. |
+  | 7-8   | **Strong Solution**: The final answer correctly addresses the main requirements with only minor omissions or presentation issues. The solution is accurate and useful, though it may have small areas for improvement. |
+  | 5-6   | **Adequate Solution**: The final answer addresses the core task but has some notable gaps, inaccuracies, or suboptimal elements. It would require modest revisions to be fully satisfactory. |
+  | 3-4   | **Partial Solution**: The final answer addresses some aspects of the task but has significant omissions, inaccuracies, or misconceptions. It provides some value but would need substantial revisions. |
+  | 1-2   | **Weak Solution**: The final answer demonstrates fundamental misunderstandings of the task or is critically incomplete. It contains minimal useful elements and would need to be largely redone. |
+  | 0     | **Failed Solution**: The final answer is entirely incorrect, irrelevant to the task, completely absent, empty, or contains only "Unable to determine" (or similar non-substantive response). No meaningful progress toward solving the task is evident. |
+
+  ## Final Evaluation Output
+  Please provide your analysis rationale first, then give the final score judgment.You must provide your evaluation in valid JSON format with the following structure:
+  ```json
+  {
+    "analysis": "Comprehensive assessment including reasoning, solution path evaluation, and if applicable, explanation of failure points",
+    "score": [integer between 0-10]
+  }

@@ -1,0 +1,96 @@
+merge_prompt: |
+  # Comprehensive Task Guide for Research Questions
+
+  ## Core Objective:
+  Intelligently merge 2-3 related research questions into high-quality comprehensive questions while maintaining the integrity and accuracy of the original content.
+
+  ## Input Requirements:
+  - Each question includes: index (unique ID), question (question text), golden_answer (standard answer), content_identifier (content identifier)
+
+  ## Grouping Specifications:
+
+  ### Grouping Strategies:
+  1. **Content Matching Principle**:
+     - Priority: Merge questions with similar themes
+
+  2. **Quantity Control**:
+     - Each group must contain 2-3 original questions
+     - Ensure all original questions are grouped (no omissions)
+
+  ### Standards for Question Synthesis:
+  1. **Content Integrity**:
+     - Retain all elements of the original questions
+     - Do not add new facts or assumptions
+     - Completely preserve time-related elements in their original form
+
+  2. **Question Quality**:
+     - Clear and unambiguous expression
+     - Logically coherent merged questions
+     - Do not imply any solution methods
+
+  3. **Structural Requirements**:
+     - Form complete interrogative sentences (not simply connected with "and")
+     - Correct grammatical structure
+     - Preserve professional terminology in its original form
+
+  ## Output Specifications:
+  [
+    {
+      "question": "Text of the synthesized question",
+      "index": [1,2,3], // Original indices
+      "content_identifier": "Original content identifier"
+    }
+  ]
+
+check_prompt_1: |
+  Task Instructions:
+  Verify if complex questions can be properly decomposed into their original questions.
+  Return state=1 if all conditions are met, state=0 otherwise:
+
+  Conditions for state=1:
+  1. The complex question clearly contains all elements from original questions
+  2. No information distortion or ambiguity introduced
+  3. Logical relationships between original questions are properly maintained
+
+
+  For example:  
+  "index": 1  
+  "Complex Question": "In the Academia Insider article 'The best AI tools for research papers and academic research (Literature review, grants, PDFs and more)', how does Semantic Scholar enhance literature review efficiency? Who are the two contributors—one with a Master’s and Ph.D. in Chemistry from the UK and Australia, and the other a Ph.D. student at Simon Fraser University (SFU)—credited with contributing academic insights and initiating the list of AI research tools, respectively?"  
+  "Original Questions": [  
+      "According to 'The best AI tools for research papers and academic research (Literature review, grants, PDFs and more) - Academia Insider', how does Semantic Scholar enhance literature review efficiency?",  
+      "In the Academia Insider article 'The best AI tools for research papers and academic research (Literature review, grants, PDFs and more)', who is the contributor with a Master’s and Ph.D. in Chemistry from the UK and Australia and extensive research experience?",  
+      "In the Academia Insider article 'The best AI tools for research papers and academic research (Literature review, grants, PDFs and more)', who is the contributor credited with helping to start the list of AI research tools?"  
+  ]  
+  The above complex question can be decomposed into these original questions without deviation in content, and the status is returned as 1.  
+
+  "index": 2  
+  "Complex Question": "Based on the trends reported in the 2025 scientific publications of the Academy of Articles and the information on open and free content from the JSTOR and Artstor 'About JSTOR' page, when does research on protecting cultural and linguistic diversity through AI reach its peak? What is the total number of research reports available, and how many policy institutes are represented in the collection?"  
+  "Original Questions": [  
+      "According to the 2025 scientific publication trends of the Academy of Articles, when does research on protecting cultural and linguistic diversity through AI reach its peak?",  
+      "According to the information on open and free content from the JSTOR and Artstor 'About JSTOR' page, what is the total number of research reports in the collection? How many policy institutes are covered?"  
+  ]  
+  The above complex question cannot be decomposed into original questions because the direction of the questions in the complex question is confusing and ambiguous, and the status is returned as 0.
+
+  Example Output:
+  [{
+      "index": 1,
+      "complex_question": "original complex question",
+      "state": 1
+  }]
+
+check_prompt_2: | 
+  Answer the provided complex research questions based on your knowledge.
+  For each question, provide your answer.
+
+  Output JSON format:
+  [{{
+  "index": 1 // original question indices
+  "complex_question": original complex question,
+  "llm_answer"://your answer
+
+  }},
+  {{
+  "index": 2 // original question indices
+  "complex_question": original complex question,
+  "llm_answer"://your answer
+  }}]
